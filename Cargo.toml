@@ -8,7 +8,7 @@ color-eyre = "0.6.3"
 crossterm = { version = "0.27.0", features = ["event-stream"] }
 futures = "0.3.30"
 itertools = "0.13.0"
-ratatui = "0.26.3"
+ratatui = "0.27"
 tokio = { version = "1.38.0", features = ["macros", "rt", "time"] }
 tokio-util = "0.7.11"
 

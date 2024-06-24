@@ -3,7 +3,8 @@ use crossterm::event::KeyCode;
 use itertools::Itertools;
 use ratatui::{
     prelude::*,
-    widgets::{block::*, *},
+    text::ToSpan,
+    widgets::{Block, BorderType, Padding, Paragraph},
 };
 use std::{fmt::Debug, iter};
 use tui::{Event, Tui};
@@ -274,11 +275,13 @@ struct LetterBlock {
 impl LetterBlock {
     fn render(&self, area: Rect, buf: &mut Buffer) {
         let style = self.style();
-        let ch = match self.contents {
-            Some(letter) => &format!("{letter}").to_ascii_uppercase(),
-            None => " ",
-        };
-        let paragraph = Paragraph::new(ch).style(style).alignment(Alignment::Center);
+        let ch = &self
+            .contents
+            .map(|l| char::from(l).to_ascii_uppercase())
+            .unwrap_or(' ');
+        let paragraph = Paragraph::new(ch.to_span())
+            .style(style)
+            .alignment(Alignment::Center);
         if area.height < 3 || area.width < 7 {
             paragraph.render(area, buf);
             return;
