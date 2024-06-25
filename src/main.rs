@@ -40,7 +40,7 @@ impl App {
             rows: vec![Row::default()],
             cursor: 0,
             feedback_mode: false,
-            list: Word::list().to_vec(),
+            list: Word::list(),
             filter: Default::default(),
         };
         app.active_block_mut().selected = true;
@@ -170,7 +170,7 @@ impl App {
                         l.contents.expect("all letters should be set by now")
                     })
                     .into(),
-                    map_array(&row.letters, |l| l.color).into(),
+                    map_array(&row.letters, |l| l.color),
                 );
                 self.list.retain(|w| w.matches(&self.filter));
                 self.sort_list();
@@ -274,13 +274,12 @@ struct LetterBlock {
 
 impl LetterBlock {
     fn render(&self, area: Rect, buf: &mut Buffer) {
-        let style = self.style();
-        let ch = &self
+        let ch = self
             .contents
             .map(|l| char::from(l).to_ascii_uppercase())
             .unwrap_or(' ');
         let paragraph = Paragraph::new(ch.to_span())
-            .style(style)
+            .style(self.style())
             .alignment(Alignment::Center);
         if area.height < 3 || area.width < 7 {
             paragraph.render(area, buf);

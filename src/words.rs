@@ -5,7 +5,6 @@ use color_eyre::{
 use std::{
     fmt::{self, Debug, Display, Write},
     ops::{Index, IndexMut},
-    sync::OnceLock,
 };
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
@@ -161,15 +160,11 @@ impl Display for Word {
 }
 
 impl Word {
-    pub fn list() -> &'static [Word] {
-        static LIST: OnceLock<Vec<Word>> = OnceLock::new();
-
-        LIST.get_or_init(|| {
-            include_str!("../words")
-                .split_whitespace()
-                .map(|w| w.try_into().expect("incorrect word in word list"))
-                .collect()
-        })
+    pub fn list() -> Vec<Word> {
+        include_str!("../words")
+            .split_whitespace()
+            .map(|w| w.try_into().expect("incorrect word in word list"))
+            .collect()
     }
 
     #[inline]
@@ -298,17 +293,12 @@ impl Filter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::ptr;
 
     #[test]
     fn test_list() {
-        let list1 = Word::list();
-        let list2 = Word::list();
+        let list = Word::list();
 
-        // Should be cached.
-        assert!(ptr::eq(list1, list2));
-
-        assert_eq!(list1.len(), 14855);
+        assert_eq!(list.len(), 14855);
     }
 
     #[test]
