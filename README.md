@@ -11,4 +11,3 @@ Then repeat the following process as long as needed:
 - Press enter/return
 - Use arrow keys to mark the feedback from the Wordle game.
 - Press enter/return
-- 
