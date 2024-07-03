@@ -1,6 +1,6 @@
 # Wordle hard mode solver
 
-<script src="https://asciinema.org/a/666617.js" id="asciicast-666617" async="true"></script>
+[![asciicast](https://asciinema.org/a/666617.svg)](https://asciinema.org/a/666617)
 
 ## Usage
 
