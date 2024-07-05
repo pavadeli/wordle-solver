@@ -45,6 +45,7 @@ impl App {
         };
         app.active_block_mut().selected = true;
         app.sort_list();
+        app.fill_suggested_word();
         app
     }
 
@@ -84,13 +85,24 @@ impl App {
         let row_areas = Layout::vertical(
             iter::once(Constraint::Fill(1))
                 .chain(iter::repeat(Constraint::Length(3)).take(self.rows.len()))
+                .chain(iter::once(Constraint::Length(1)))
                 .chain(iter::once(Constraint::Fill(1))),
         )
         .spacing(1)
         .split(left);
-        for (row, &area) in self.rows.iter().zip(row_areas.iter().skip(1)) {
+
+        let mut area_iter = row_areas.iter().skip(1);
+        for (row, &area) in self.rows.iter().zip(&mut area_iter) {
             row.render(area, buf);
         }
+
+        let mode_area = *area_iter.next().unwrap();
+        Paragraph::new(if self.feedback_mode {
+            "ENTER FEEDBACK"
+        } else {
+            "ENTER WORD"
+        })
+        .render(mode_area, buf);
 
         // Render word list to the right
         let [_, word_area, _] = Layout::vertical([
@@ -149,7 +161,7 @@ impl App {
                 self.set_cursor(self.cursor + 1);
                 Some(Action::Draw)
             }
-            KeyCode::Enter if self.cursor == 5 => {
+            KeyCode::Enter if self.has_word() => {
                 self.set_cursor(0);
                 self.feedback_mode = true;
                 self.apply_previous_feedback();
@@ -177,6 +189,7 @@ impl App {
                 self.rows.push(Row::default());
                 self.set_cursor(0);
                 self.feedback_mode = false;
+                self.fill_suggested_word();
                 Some(Action::Draw)
             }
             KeyCode::Right => {
@@ -234,6 +247,21 @@ impl App {
         let total = self.list.len() as u32;
         self.list
             .sort_unstable_by_key(|w| u32::MAX - w.relevance(&stats, total))
+    }
+
+    fn fill_suggested_word(&mut self) {
+        let Some(&word) = self.list.first() else {
+            return;
+        };
+        self.last_row_mut()
+            .letters
+            .iter_mut()
+            .zip(word.iter())
+            .for_each(|(block, letter)| block.contents = Some(letter));
+    }
+
+    fn has_word(&self) -> bool {
+        self.last_row().letters.iter().all(|l| l.contents.is_some())
     }
 
     fn apply_previous_feedback(&mut self) {

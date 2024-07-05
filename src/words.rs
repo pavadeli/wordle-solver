@@ -191,7 +191,7 @@ impl Word {
             .all(|(actual, minimum)| actual >= minimum)
     }
 
-    fn iter(&self) -> impl Iterator<Item = Letter> + '_ {
+    pub fn iter(&self) -> impl Iterator<Item = Letter> + '_ {
         self.0.iter().copied()
     }
 
