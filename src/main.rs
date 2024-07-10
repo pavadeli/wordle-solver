@@ -8,7 +8,7 @@ use ratatui::{
 };
 use std::{fmt::Debug, iter};
 use tui::{Event, Tui};
-use words::{Feedback, Filter, Letter, Word};
+use words::{Feedback, Filter, Letter, LetterSet, Word};
 
 mod errors;
 mod tui;
@@ -164,7 +164,7 @@ impl App {
             KeyCode::Enter if self.has_word() => {
                 self.set_cursor(0);
                 self.feedback_mode = true;
-                self.apply_previous_feedback();
+                self.apply_expected_feedback();
                 Some(Action::Draw)
             }
             KeyCode::Esc => Some(Action::Exit),
@@ -264,13 +264,27 @@ impl App {
         self.last_row().letters.iter().all(|l| l.contents.is_some())
     }
 
-    fn apply_previous_feedback(&mut self) {
-        let mask = self.filter.mask;
-        let row = self.last_row_mut();
-        for (pos, &mask) in mask.iter().enumerate() {
-            if let Ok(letter) = mask.into_iter().exactly_one() {
-                if row.letters[pos].contents == Some(letter) {
-                    row.letters[pos].color = Feedback::Green;
+    fn apply_expected_feedback(&mut self) {
+        let mut remaining_letters = [LetterSet::EMPTY; 5];
+        let mut known_mandatory_letters = LetterSet::FULL;
+        for &word in &self.list {
+            known_mandatory_letters = known_mandatory_letters.intersect(word.into());
+            for (set, letter) in remaining_letters.iter_mut().zip(word.iter()) {
+                set.insert(letter);
+            }
+        }
+        let last_row = self.last_row_mut();
+        for (block, letter) in last_row.letters.iter_mut().zip(remaining_letters) {
+            if let Ok(letter) = letter.into_iter().exactly_one() {
+                block.contents = Some(letter);
+                block.color = Feedback::Green;
+                known_mandatory_letters.remove(letter);
+            }
+        }
+        for maybe_misplaced in known_mandatory_letters {
+            for block in last_row.letters.iter_mut() {
+                if block.contents == Some(maybe_misplaced) && block.color == Feedback::Black {
+                    block.color = Feedback::Yellow;
                 }
             }
         }

@@ -79,6 +79,7 @@ impl<T> LetterMap<T> {
 pub struct LetterSet(u32);
 
 impl LetterSet {
+    pub const EMPTY: LetterSet = LetterSet(0);
     pub const FULL: LetterSet = LetterSet(0x3FFFFFF);
 
     pub fn contains(self, letter: Letter) -> bool {
@@ -103,6 +104,10 @@ impl LetterSet {
         self.0 = new;
         old != new
     }
+
+    pub fn intersect(self, other: Self) -> Self {
+        Self(self.0 & other.0)
+    }
 }
 
 impl Debug for LetterSet {
@@ -120,6 +125,12 @@ impl<const N: usize> From<[Letter; N]> for LetterSet {
             value |= 1 << letter.0;
         }
         Self(value)
+    }
+}
+
+impl From<Word> for LetterSet {
+    fn from(value: Word) -> Self {
+        value.0.into()
     }
 }
 
