@@ -38,7 +38,8 @@ fn main() -> Result<()> {
         Some(word) => {
             let word = Word::try_from(word)?;
             println!("Starting simulation with word \"{word}\"");
-            for (guess, feedback) in Simulation::new(word).run() {
+            for round in Simulation::new(word).run() {
+                let (guess, feedback) = round?;
                 println!("Guess: {guess}, feedback: {feedback:?}");
             }
             Ok(())

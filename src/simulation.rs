@@ -2,6 +2,7 @@ use crate::{
     game::Game,
     words::{Feedback, LetterMap, Word},
 };
+use color_eyre::eyre::{eyre, Result};
 use itertools::Itertools;
 use std::iter;
 
@@ -25,14 +26,20 @@ impl Simulation {
         }
     }
 
-    pub fn run(&mut self) -> impl Iterator<Item = (Word, [Feedback; 5])> + '_ {
+    pub fn run(&mut self) -> impl Iterator<Item = Result<(Word, [Feedback; 5])>> + '_ {
         iter::from_fn(|| {
-            let guess = self.game.suggested_word().expect("unknown word");
+            let guess = match self.game.suggested_word() {
+                Some(word) => word,
+                None => return Some(Err(eyre!("unknown word \"{}\"", self.word))),
+            };
             let feedback = self.get_feedback(guess);
             self.game.apply_feedback(guess, feedback);
-            Some((guess, feedback))
+            Some(Ok((guess, feedback)))
         })
-        .take_while_inclusive(|(_, feedback)| feedback != &[Feedback::Green; 5])
+        .take_while_inclusive(|i| match i {
+            Ok((_, f)) => f != &[Feedback::Green; 5],
+            _ => false,
+        })
     }
 
     fn get_feedback(&self, guess: Word) -> [Feedback; 5] {
