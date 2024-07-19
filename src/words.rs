@@ -5,6 +5,7 @@ use color_eyre::{
 use std::{
     fmt::{self, Debug, Display, Write},
     ops::{Index, IndexMut},
+    sync::OnceLock,
 };
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
@@ -48,8 +49,16 @@ impl From<Letter> for char {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Default, PartialEq, Eq)]
 pub struct LetterMap<T>([T; 26]);
+
+impl<T: Debug> Debug for LetterMap<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_map()
+            .entries(LetterSet::FULL.into_iter().map(char::from).zip(self.iter()))
+            .finish()
+    }
+}
 
 impl<T> IndexMut<Letter> for LetterMap<T> {
     fn index_mut(&mut self, index: Letter) -> &mut Self::Output {
@@ -87,7 +96,7 @@ impl LetterSet {
     }
 
     #[cfg(test)]
-    pub fn inverse(self) -> Self {
+    pub const fn inverse(self) -> Self {
         Self(!self.0 & Self::FULL.0)
     }
 
@@ -144,6 +153,7 @@ impl IntoIterator for LetterSet {
     }
 }
 
+#[derive(Clone)]
 pub struct LetterSetIter(u32);
 
 impl Iterator for LetterSetIter {
@@ -171,11 +181,15 @@ impl Display for Word {
 }
 
 impl Word {
-    pub fn list() -> Vec<Word> {
-        include_str!("../words")
-            .split_whitespace()
-            .map(|w| w.try_into().expect("incorrect word in word list"))
-            .collect()
+    pub fn list() -> &'static [Word] {
+        static LIST: OnceLock<Vec<Word>> = OnceLock::new();
+
+        LIST.get_or_init(|| {
+            include_str!("../words")
+                .split_whitespace()
+                .map(|w| w.try_into().expect("incorrect word in word list"))
+                .collect()
+        })
     }
 
     #[inline]
@@ -204,25 +218,6 @@ impl Word {
 
     pub fn iter(&self) -> impl Iterator<Item = Letter> + '_ {
         self.0.iter().copied()
-    }
-
-    pub fn stats(words: &[Word]) -> LetterMap<u32> {
-        let mut map = LetterMap::default();
-        for word in words {
-            for letter in word.iter() {
-                map[letter] += 1;
-            }
-        }
-        map
-    }
-
-    pub fn relevance(self, stats: &LetterMap<u32>, total: u32) -> u32 {
-        let target = total / 2;
-        let mut seen = LetterSet::default();
-        self.iter()
-            .filter(|&letter| seen.insert(letter))
-            .map(|letter| target.saturating_sub(stats[letter].abs_diff(target)))
-            .sum()
     }
 }
 
