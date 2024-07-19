@@ -40,6 +40,7 @@ impl App {
     }
 
     /// runs the application's main loop until the user quits
+    #[tokio::main(flavor = "current_thread")]
     pub async fn run(&mut self) -> Result<()> {
         let tui = &mut Tui::start()?;
 

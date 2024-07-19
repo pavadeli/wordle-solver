@@ -14,8 +14,7 @@ mod stats;
 mod tui;
 mod words;
 
-#[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     errors::install_hooks()?;
     match args().nth(1).as_deref() {
         Some("all") => {
@@ -44,6 +43,6 @@ async fn main() -> Result<()> {
             }
             Ok(())
         }
-        None => interactive::App::new().run().await,
+        None => interactive::App::new().run(),
     }
 }
